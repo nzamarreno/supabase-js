@@ -35,6 +35,7 @@ export default class SupabaseClient {
   protected authUrl: string
   protected storageUrl: string
   protected realtime: RealtimeClient
+  protected headers: { [key: string]: string }
 
   /**
    * Create a new client for use in the browser.
@@ -60,6 +61,7 @@ export default class SupabaseClient {
     this.authUrl = `${supabaseUrl}/auth/v1`
     this.storageUrl = `${supabaseUrl}/storage/v1`
     this.schema = settings.schema
+    this.headers = settings.headers || []
 
     this.auth = this._initSupabaseAuthClient(settings)
     this.realtime = this._initRealtimeClient()
@@ -79,7 +81,7 @@ export default class SupabaseClient {
   from<T = any>(table: string): SupabaseQueryBuilder<T> {
     const url = `${this.restUrl}/${table}`
     return new SupabaseQueryBuilder<T>(url, {
-      headers: this._getAuthHeaders(),
+      headers: { ...this._getAuthHeaders(), ...this.headers },
       schema: this.schema,
       realtime: this.realtime,
       table,
@@ -159,13 +161,19 @@ export default class SupabaseClient {
 
   private _initPostgRESTClient() {
     return new PostgrestClient(this.restUrl, {
-      headers: this._getAuthHeaders(),
+      headers: {
+        ...this._getAuthHeaders(),
+        ...this.headers,
+      },
       schema: this.schema,
     })
   }
 
   private _initStorageClient() {
-    return new SupabaseStorageClient(this.storageUrl, this._getAuthHeaders())
+    return new SupabaseStorageClient(this.storageUrl, {
+      ...this._getAuthHeaders(),
+      ...this.headers,
+    })
   }
 
   private _getAuthHeaders(): { [key: string]: string } {
