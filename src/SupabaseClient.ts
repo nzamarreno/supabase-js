@@ -81,7 +81,7 @@ export default class SupabaseClient {
   from<T = any>(table: string): SupabaseQueryBuilder<T> {
     const url = `${this.restUrl}/${table}`
     return new SupabaseQueryBuilder<T>(url, {
-      headers: { ...this._getAuthHeaders(), ...this.headers },
+      headers: this._getHeaders(),
       schema: this.schema,
       realtime: this.realtime,
       table,
@@ -161,19 +161,13 @@ export default class SupabaseClient {
 
   private _initPostgRESTClient() {
     return new PostgrestClient(this.restUrl, {
-      headers: {
-        ...this._getAuthHeaders(),
-        ...this.headers,
-      },
+      headers: this._getHeaders(),
       schema: this.schema,
     })
   }
 
   private _initStorageClient() {
-    return new SupabaseStorageClient(this.storageUrl, {
-      ...this._getAuthHeaders(),
-      ...this.headers,
-    })
+    return new SupabaseStorageClient(this.storageUrl, this._getHeaders())
   }
 
   private _getAuthHeaders(): { [key: string]: string } {
@@ -182,6 +176,13 @@ export default class SupabaseClient {
     headers['apikey'] = this.supabaseKey
     headers['Authorization'] = `Bearer ${authBearer}`
     return headers
+  }
+
+  private _getHeaders(): { [key: string]: string } {
+    return {
+      ...this._getAuthHeaders(),
+      ...this.headers,
+    }
   }
 
   private _closeChannel(subscription: RealtimeSubscription) {
